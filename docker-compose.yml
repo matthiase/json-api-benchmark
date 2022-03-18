@@ -1,0 +1,15 @@
+version: '3.6'
+
+services:
+  database:
+    container_name: json-api-benchmark-database
+    image: postgres:13.5-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=starwars
+    volumes: 
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./csv:/var/lib/postgresql/csv
