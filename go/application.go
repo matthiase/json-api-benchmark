@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,11 +17,12 @@ import (
 )
 
 const (
-	TIMEOUT_SERVER = 30 * time.Second
-	TIMEOUT_READ   = 15 * time.Second
-	TIMEOUT_WRITE  = 10 * time.Second
-	TIMEOUT_IDLE   = 5 * time.Second
-	DATABASE_URL   = "postgres://postgres:password@127.0.0.1:5432/starwars?sslmode=disable"
+	TIMEOUT_SERVER   = 30 * time.Second
+	TIMEOUT_READ     = 15 * time.Second
+	TIMEOUT_WRITE    = 10 * time.Second
+	TIMEOUT_IDLE     = 5 * time.Second
+	DATABASE_URL     = "postgres://postgres:password@127.0.0.1:5432/starwars?sslmode=disable"
+	SPECIES_MAX_ROWS = 37
 )
 
 type Application struct {
@@ -46,6 +48,7 @@ func NewApplication() *Application {
 }
 
 func (app *Application) Start() {
+	rand.Seed(time.Now().UnixNano())
 	channel := make(chan os.Signal, 1)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
@@ -86,22 +89,24 @@ func heartbeat(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchSpecies(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
-	var results []*Species
-	rows, err := db.Queryx("SELECT id, name FROM species LIMIT 3")
-	if err != nil {
-		log.Fatalf("Database error: %v\n", err)
-	}
-
-	for rows.Next() {
-		var row Species
-		err := rows.StructScan(&row)
-		if err != nil {
-			log.Fatalf("Error while deserializing species object: %v\n", err)
-		}
-		results = append(results, &row)
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
+		var results []*Species
+		randomID := rand.Intn(SPECIES_MAX_ROWS + 1)
+
+		rows, err := db.Queryx("SELECT id, name FROM species WHERE id = $1", randomID)
+		if err != nil {
+			log.Fatalf("Database error: %v\n", err)
+		}
+
+		for rows.Next() {
+			var row Species
+			err := rows.StructScan(&row)
+			if err != nil {
+				log.Fatalf("Error while deserializing species object: %v\n", err)
+			}
+			results = append(results, &row)
+		}
+
 		data, err := json.Marshal(results)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
