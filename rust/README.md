@@ -1,5 +1,3 @@
-# JSON API Benchmark: Rust
-
 ## Installing Rust
 If Rust not already installed on your system, download `Rustup`, which is a Rust installer and version management tool.
 ```
@@ -22,5 +20,5 @@ cargo run --release
 
 In a separate console window, run the benchmarking tool. For example
 ```
-wrk -t3 -c100 -d30s http://localhost:8080/species
+wrk -H 'Accept: application/json,text/html' -H 'Connection: keep-alive' --latency -d 15 -c 64 --timeout 8 -t 3 "http://localhost:8080/species"
 ```

@@ -18,9 +18,9 @@ Once the container is running, please read the instructions for each implementat
 ## Benchmarks
 After starting one of the implementations, running a benchmark is fairly straight forward. Personally, I use [wrk](https://github.com/wg/wrk) to run benchmarks but you're obviously free to use whatever suits you.
 ```
-wrk -t3 -c100 -d30s http://localhost:8080/species
+wrk -H 'Accept: application/json,text/html' -H 'Connection: keep-alive' --latency -d 15 -c 64 --timeout 8 -t 3 "http://localhost:8080/species"
 ```
-Runs a benchmark for 30 seconds, using 3 threads, and keeping 100 HTTP connections open.
+Runs a benchmark for 15 seconds, using 3 threads, and keeping 64 HTTP connections open.
 ```
 Running 30s test @ http://localhost:8080/species
   3 threads and 100 connections

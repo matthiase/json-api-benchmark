@@ -2,6 +2,9 @@ use crate::error::ApplicationError;
 use crate::species::Species;
 use crate::AppData;
 use actix_web::{web, HttpResponse};
+use rand::Rng;
+
+const SPECIES_MAX_ROWS: i32 = 37;
 
 pub async fn index(context: web::Data<AppData>) -> Result<HttpResponse, ApplicationError> {
     let species = fetch_species(&context.db).await?;
@@ -9,7 +12,9 @@ pub async fn index(context: web::Data<AppData>) -> Result<HttpResponse, Applicat
 }
 
 async fn fetch_species(pool: &sqlx::postgres::PgPool) -> Result<Vec<Species>, sqlx::Error> {
-    let rows = sqlx::query!("SELECT * FROM species LIMIT 3")
+    let mut rng = rand::thread_rng();
+    let random_id: i32 = rng.gen_range(1..=SPECIES_MAX_ROWS);
+    let rows = sqlx::query!("SELECT * FROM species WHERE id > $1", random_id)
         .fetch_all(pool)
         .await?;
 
